@@ -4,6 +4,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -41,8 +42,10 @@ if (isLocal) {
 }
 
 // ===========================
-// Email Transporter (Gmail)
+// Email: Gmail (local) + Resend (prod)
 // ===========================
+
+// Gmail transporter – used only in local dev
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -51,13 +54,58 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Resend client – used in production (Render)
+const resend =
+  process.env.RESEND_API_KEY && new Resend(process.env.RESEND_API_KEY);
+
 // ===========================
-// Send Email Function (old style)
+// Send Email Function
 // ===========================
 async function sendEmail({ to, subject, html, attachments }) {
-  // If no credentials, log and return mock success (like your old code)
+  // ======================
+  // PROD / RENDER: use Resend
+  // ======================
+  if (!isLocal && resend) {
+    try {
+      // Convert first attachment (pdfBuffer) to base64
+      let resendAttachments = [];
+      if (attachments && attachments.length > 0) {
+        const first = attachments[0];
+        const contentBase64 = Buffer.from(first.content).toString("base64");
+        resendAttachments = [
+          {
+            filename: first.filename || "bill.pdf",
+            content: contentBase64,
+          },
+        ];
+      }
+
+      const { data, error } = await resend.emails.send({
+        from: process.env.MAIL_FROM || "Invoice App <onboarding@resend.dev>",
+        to: [to],
+        subject,
+        html,
+        attachments: resendAttachments,
+      });
+
+      if (error) {
+        console.error("❌ Resend email error:", error);
+        throw new Error(error.message || "Resend email failed");
+      }
+
+      console.log("✅ Email sent via Resend:", data?.id);
+      return { messageId: data?.id || "resend-id" };
+    } catch (err) {
+      console.error("❌ Resend send error:", err);
+      throw err;
+    }
+  }
+
+  // ======================
+  // LOCAL DEV: use Gmail via Nodemailer (your old working style)
+  // ======================
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.log("Mock Email Sent:", { to, subject, attachments });
+    console.log("Mock Email Sent (no creds):", { to, subject, attachments });
     return { messageId: "mock-id" };
   }
 
@@ -69,6 +117,7 @@ async function sendEmail({ to, subject, html, attachments }) {
     attachments,
   });
 
+  console.log("✅ Email sent via Gmail:", info.messageId);
   return info;
 }
 
