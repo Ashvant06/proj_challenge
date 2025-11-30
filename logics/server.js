@@ -78,7 +78,6 @@ app.post("/generate-bill", async (req, res) => {
     // Generate PDF
     const browser = await puppeteer.launch({
       headless: "new",
-      executablePath: puppeteer.executablePath(), // <- use installed Chrome
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
