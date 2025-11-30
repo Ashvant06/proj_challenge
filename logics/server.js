@@ -44,25 +44,6 @@ async function sendEmail({ to, subject, html, attachments }) {
   });
 }
 
-// Small helper to decide which Chrome executable to use
-function getChromeExecutablePath() {
-  // 1️⃣ If you set PUPPETEER_EXECUTABLE_PATH in Render env vars, use that
-  if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-    console.log("Using Chrome from PUPPETEER_EXECUTABLE_PATH:", process.env.PUPPETEER_EXECUTABLE_PATH);
-    return process.env.PUPPETEER_EXECUTABLE_PATH;
-  }
-
-  // 2️⃣ Otherwise, let Puppeteer decide (it will look in its cache dir)
-  try {
-    const p = puppeteer.executablePath();
-    console.log("Using Puppeteer executablePath():", p);
-    return p;
-  } catch (e) {
-    console.log("Could not resolve puppeteer.executablePath(), launching without it");
-    return undefined;
-  }
-}
-
 // ===========================
 // Generate PDF (Preview or Email)
 // ===========================
@@ -94,7 +75,8 @@ app.post("/generate-bill", async (req, res) => {
   html = html.replace(/{{rows}}/g, rows);
 
   try {
-    const launchOptions = {
+    // Generate PDF
+    const browser = await puppeteer.launch({
       headless: "new",
       args: [
         "--no-sandbox",
@@ -103,15 +85,7 @@ app.post("/generate-bill", async (req, res) => {
         "--disable-gpu",
         "--disable-web-security",
       ],
-    };
-
-    const executablePath = getChromeExecutablePath();
-    if (executablePath) {
-      launchOptions.executablePath = executablePath;
-    }
-
-    // Generate PDF
-    const browser = await puppeteer.launch(launchOptions);
+    });
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
