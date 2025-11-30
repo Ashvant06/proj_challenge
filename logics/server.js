@@ -14,7 +14,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Serve public folder correctly in deployment
+// Serve public folder (public/index.html, script.js, etc.)
 app.use(express.static(path.join(__dirname, "public")));
 
 // ===========================
@@ -78,6 +78,7 @@ app.post("/generate-bill", async (req, res) => {
     // Generate PDF
     const browser = await puppeteer.launch({
       headless: "new",
+      // Let Puppeteer decide where Chrome is; it will use the one we installed in render-build.sh
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
