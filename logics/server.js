@@ -55,17 +55,22 @@ app.post("/generate-bill", async (req, res) => {
   const templatePath = path.join(__dirname, "templates/bills.html");
   let html = fs.readFileSync(templatePath, "utf8");
 
-  html = html.replace(/{{customerName}}/g, customerName)
-             .replace(/{{total}}/g, total);
+  html = html
+    .replace(/{{customerName}}/g, customerName)
+    .replace(/{{total}}/g, total);
 
-  const rows = items.map(item => `
+  const rows = items
+    .map(
+      (item) => `
     <tr>
       <td>${item.name}</td>
       <td>${item.qty}</td>
       <td>₹${item.price}</td>
       <td>₹${item.qty * item.price}</td>
     </tr>
-  `).join("");
+  `
+    )
+    .join("");
 
   html = html.replace(/{{rows}}/g, rows);
 
@@ -73,14 +78,14 @@ app.post("/generate-bill", async (req, res) => {
     // Generate PDF
     const browser = await puppeteer.launch({
       headless: "new",
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined, 
+      executablePath: puppeteer.executablePath(), // <- use installed Chrome
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
-        "--disable-web-security"
-      ]
+        "--disable-web-security",
+      ],
     });
 
     const page = await browser.newPage();
@@ -88,7 +93,7 @@ app.post("/generate-bill", async (req, res) => {
 
     const pdfBuffer = await page.pdf({
       format: "A4",
-      printBackground: true
+      printBackground: true,
     });
 
     await browser.close();
@@ -118,7 +123,6 @@ app.post("/generate-bill", async (req, res) => {
     });
 
     return res.send(pdfBuffer);
-
   } catch (err) {
     console.error(err);
     return res.status(500).send("Error generating PDF");
