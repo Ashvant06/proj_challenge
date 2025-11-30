@@ -29,11 +29,11 @@ let chromium;
 
 if (isLocal) {
   // Full Puppeteer for local dev
-  puppeteer = await import("puppeteer").then(m => m.default || m);
+  puppeteer = await import("puppeteer").then((m) => m.default || m);
 } else {
   // Lightweight combo for serverless / Render
-  chromium = await import("@sparticuz/chromium").then(m => m.default || m);
-  puppeteer = await import("puppeteer-core").then(m => m.default || m);
+  chromium = await import("@sparticuz/chromium").then((m) => m.default || m);
+  puppeteer = await import("puppeteer-core").then((m) => m.default || m);
 }
 
 // ===========================
@@ -47,20 +47,28 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Send Email Function
+// Safe Send Email Function
 async function sendEmail({ to, subject, html, attachments }) {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     console.log("❗ Email credentials missing → Email skipped.");
-    return { messageId: "mock-id" };
+    return { ok: false, error: "Missing email credentials" };
   }
 
-  return await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to,
-    subject,
-    html,
-    attachments,
-  });
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      html,
+      attachments,
+    });
+
+    console.log("✅ Email sent:", info.messageId);
+    return { ok: true, info };
+  } catch (err) {
+    console.error("❌ Email send error:", err);
+    return { ok: false, error: err.message || "Email send failed" };
+  }
 }
 
 // Helper to get a browser instance
@@ -136,13 +144,19 @@ app.post("/generate-bill", async (req, res) => {
         return res.status(400).json({ error: "Customer email missing" });
       }
 
-      await sendEmail({
+      const emailResult = await sendEmail({
         to: customerEmail,
         subject: "Your Bill - PDF Attached",
         html: `<p>Hello <strong>${customerName}</strong>,</p>
                <p>Please find your attached bill.</p>`,
         attachments: [{ filename: "bill.pdf", content: pdfBuffer }],
       });
+
+      if (!emailResult.ok) {
+        return res
+          .status(500)
+          .json({ success: false, error: "Email failed: " + emailResult.error });
+      }
 
       console.log("📧 Email sent to:", customerEmail);
       return res.json({ success: true, message: "Email sent!" });
