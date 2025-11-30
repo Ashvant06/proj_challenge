@@ -26,6 +26,7 @@ const isLocal =
 
 let puppeteer;
 let chromium;
+let executablePathPromise = null;
 
 if (isLocal) {
   // Full Puppeteer for local dev
@@ -34,6 +35,9 @@ if (isLocal) {
   // Lightweight combo for serverless / Render
   chromium = await import("@sparticuz/chromium").then((m) => m.default || m);
   puppeteer = await import("puppeteer-core").then((m) => m.default || m);
+
+  // ❗ VERY IMPORTANT: resolve executablePath ONCE and reuse (fixes ETXTBSY)
+  executablePathPromise = chromium.executablePath();
 }
 
 // ===========================
@@ -81,7 +85,9 @@ async function getBrowser() {
     });
   } else {
     console.log("🚀 Launching Chromium via @sparticuz/chromium");
-    const executablePath = await chromium.executablePath();
+
+    // ✅ Reuse the same executablePath every time
+    const executablePath = await executablePathPromise;
     console.log("Chromium executablePath:", executablePath);
 
     return await puppeteer.launch({
