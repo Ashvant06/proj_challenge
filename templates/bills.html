@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            padding: 30px;
+            background: #f7f7f7;
+        }
+
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 25px 35px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.12);
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: #222;
+        }
+
+        .customer-details {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .customer-details strong {
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 15px;
+        }
+
+        th {
+            background: #4a90e2;
+            color: #fff;
+            border: none;
+            text-align: left;
+            padding: 12px;
+            font-weight: 600;
+        }
+
+        td {
+            background: #fafafa;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:nth-child(even) td {
+            background: #f0f6ff;
+        }
+
+        .total-section {
+            margin-top: 25px;
+            text-align: right;
+            font-size: 20px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="invoice-box">
+
+        <div class="header">
+            <h2>INVOICE</h2>
+        </div>
+
+        <div class="customer-details">
+            <p><strong>Customer Name:</strong> {{customerName}}</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Price (₹)</th>
+                    <th>Total (₹)</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {{rows}}
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            Grand Total: ₹{{total}}
+        </div>
+
+        <div class="footer">
+            Thank you for your purchase!  
+           
+        </div>
+
+    </div>
+
+</body>
+
+</html>
