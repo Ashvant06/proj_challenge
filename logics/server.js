@@ -75,15 +75,15 @@ app.post("/generate-bill", async (req, res) => {
   html = html.replace(/{{rows}}/g, rows);
 
   try {
-    // Generate PDF using system Chromium
+    // Generate PDF
     const browser = await puppeteer.launch({
       headless: "new",
-      executablePath: "/usr/bin/chromium",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
+        "--disable-web-security",
       ],
     });
 
