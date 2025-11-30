@@ -3,7 +3,6 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import fs from "fs";
 import path from "path";
-import puppeteer from "puppeteer";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
@@ -16,6 +15,26 @@ app.use(bodyParser.json());
 
 // Serve public folder (public/index.html, script.js, etc.)
 app.use(express.static(path.join(__dirname, "public")));
+
+// ===========================
+// Puppeteer / Chromium setup
+// ===========================
+const isLocal =
+  process.env.NODE_ENV === "development" ||
+  process.platform === "win32" ||
+  process.platform === "darwin";
+
+let puppeteer;
+let chromium;
+
+if (isLocal) {
+  // Full Puppeteer for local dev
+  puppeteer = await import("puppeteer").then(m => m.default || m);
+} else {
+  // Lightweight combo for serverless / Render
+  chromium = await import("@sparticuz/chromium").then(m => m.default || m);
+  puppeteer = await import("puppeteer-core").then(m => m.default || m);
+}
 
 // ===========================
 // Email Transporter (Gmail)
@@ -42,6 +61,28 @@ async function sendEmail({ to, subject, html, attachments }) {
     html,
     attachments,
   });
+}
+
+// Helper to get a browser instance
+async function getBrowser() {
+  if (isLocal) {
+    console.log("🚀 Launching local Puppeteer");
+    return await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+  } else {
+    console.log("🚀 Launching Chromium via @sparticuz/chromium");
+    const executablePath = await chromium.executablePath();
+    console.log("Chromium executablePath:", executablePath);
+
+    return await puppeteer.launch({
+      executablePath,
+      args: chromium.args,
+      headless: chromium.headless,
+      defaultViewport: chromium.defaultViewport,
+    });
+  }
 }
 
 // ===========================
@@ -74,18 +115,10 @@ app.post("/generate-bill", async (req, res) => {
 
   html = html.replace(/{{rows}}/g, rows);
 
+  let browser;
+
   try {
-    // Generate PDF
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--disable-web-security",
-      ],
-    });
+    browser = await getBrowser();
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
@@ -124,6 +157,11 @@ app.post("/generate-bill", async (req, res) => {
     return res.send(pdfBuffer);
   } catch (err) {
     console.error("PDF generation error:", err);
+    if (browser) {
+      try {
+        await browser.close();
+      } catch {}
+    }
     return res.status(500).send("Error generating PDF");
   }
 });
