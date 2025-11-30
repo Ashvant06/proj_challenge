@@ -36,7 +36,7 @@ if (isLocal) {
   chromium = await import("@sparticuz/chromium").then((m) => m.default || m);
   puppeteer = await import("puppeteer-core").then((m) => m.default || m);
 
-  // ❗ VERY IMPORTANT: resolve executablePath ONCE and reuse (fixes ETXTBSY)
+  // ❗ Resolve executablePath ONCE and reuse (fixes ETXTBSY)
   executablePathPromise = chromium.executablePath();
 }
 
@@ -51,28 +51,25 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Safe Send Email Function
+// ===========================
+// Send Email Function (old style)
+// ===========================
 async function sendEmail({ to, subject, html, attachments }) {
+  // If no credentials, log and return mock success (like your old code)
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.log("❗ Email credentials missing → Email skipped.");
-    return { ok: false, error: "Missing email credentials" };
+    console.log("Mock Email Sent:", { to, subject, attachments });
+    return { messageId: "mock-id" };
   }
 
-  try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to,
-      subject,
-      html,
-      attachments,
-    });
+  const info = await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to,
+    subject,
+    html,
+    attachments,
+  });
 
-    console.log("✅ Email sent:", info.messageId);
-    return { ok: true, info };
-  } catch (err) {
-    console.error("❌ Email send error:", err);
-    return { ok: false, error: err.message || "Email send failed" };
-  }
+  return info;
 }
 
 // Helper to get a browser instance
@@ -150,22 +147,23 @@ app.post("/generate-bill", async (req, res) => {
         return res.status(400).json({ error: "Customer email missing" });
       }
 
-      const emailResult = await sendEmail({
-        to: customerEmail,
-        subject: "Your Bill - PDF Attached",
-        html: `<p>Hello <strong>${customerName}</strong>,</p>
-               <p>Please find your attached bill.</p>`,
-        attachments: [{ filename: "bill.pdf", content: pdfBuffer }],
-      });
+      try {
+        const info = await sendEmail({
+          to: customerEmail,
+          subject: "Your Bill - PDF Attached",
+          html: `<p>Hello <strong>${customerName}</strong>,</p>
+                 <p>Please find your attached bill.</p>`,
+          attachments: [{ filename: "bill.pdf", content: pdfBuffer }],
+        });
 
-      if (!emailResult.ok) {
+        console.log("📧 Email sent:", info.messageId);
+        return res.json({ success: true, message: "Email sent!" });
+      } catch (err) {
+        console.error("❌ Email send error:", err);
         return res
           .status(500)
-          .json({ success: false, error: "Email failed: " + emailResult.error });
+          .json({ success: false, error: "Failed to send email" });
       }
-
-      console.log("📧 Email sent to:", customerEmail);
-      return res.json({ success: true, message: "Email sent!" });
     }
 
     // PREVIEW MODE
