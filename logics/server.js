@@ -14,7 +14,8 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-app.use(express.static(path.join(__dirname, "../public")));
+// Serve public folder correctly in deployment
+app.use(express.static(path.join(__dirname, "public")));
 
 // ===========================
 // Email Transporter (Gmail)
@@ -22,15 +23,15 @@ app.use(express.static(path.join(__dirname, "../public")));
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,  // your email
-    pass: process.env.EMAIL_PASS,  // app password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
 // Send Email Function
 async function sendEmail({ to, subject, html, attachments }) {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.log("❗ Email credentials missing → Email sending skipped.");
+    console.log("❗ Email credentials missing → Email skipped.");
     return { messageId: "mock-id" };
   }
 
@@ -50,8 +51,8 @@ app.post("/generate-bill", async (req, res) => {
   const mode = req.query.mode; // "preview" or "email"
   const { customerName, customerEmail, items, total } = req.body;
 
-  // Load invoice HTML template
-  const templatePath = path.join(__dirname, "../templates/bills.html");
+  // Load HTML template
+  const templatePath = path.join(__dirname, "templates/bills.html");
   let html = fs.readFileSync(templatePath, "utf8");
 
   html = html.replace(/{{customerName}}/g, customerName)
@@ -72,7 +73,14 @@ app.post("/generate-bill", async (req, res) => {
     // Generate PDF
     const browser = await puppeteer.launch({
       headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined, 
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-web-security"
+      ]
     });
 
     const page = await browser.newPage();
@@ -85,9 +93,7 @@ app.post("/generate-bill", async (req, res) => {
 
     await browser.close();
 
-    // =======================
-    // 1️⃣ EMAIL MODE
-    // =======================
+    // EMAIL MODE
     if (mode === "email") {
       if (!customerEmail) {
         return res.status(400).json({ error: "Customer email missing" });
@@ -105,9 +111,7 @@ app.post("/generate-bill", async (req, res) => {
       return res.json({ success: true, message: "Email sent!" });
     }
 
-    // =======================
-    // 2️⃣ PREVIEW MODE
-    // =======================
+    // PREVIEW MODE
     res.set({
       "Content-Type": "application/pdf",
       "Content-Disposition": "inline; filename=bill.pdf",
@@ -124,6 +128,7 @@ app.post("/generate-bill", async (req, res) => {
 // ===========================
 // Start Server
 // ===========================
-app.listen(process.env.PORT || 5000, () =>
-  console.log("🚀 Server running at http://localhost:5000")
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () =>
+  console.log(`🚀 Server running at http://localhost:${PORT}`)
 );
