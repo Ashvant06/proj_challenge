@@ -1,5 +1,8 @@
 let items = [];
 
+// Base URL works in local + deployed (same origin)
+const API_BASE = window.location.origin;
+
 function addItem() {
   const name = document.getElementById("itemName").value;
   const qty = Number(document.getElementById("qty").value);
@@ -30,7 +33,7 @@ function updateTable() {
 
   let grand = 0;
 
-  items.forEach(i => {
+  items.forEach((i) => {
     const t = i.qty * i.price;
     grand += t;
 
@@ -57,16 +60,25 @@ async function generatePDF() {
 
   const total = items.reduce((sum, i) => sum + i.qty * i.price, 0);
 
-  const res = await fetch("http://localhost:5000/generate-bill?mode=preview", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ customerName, items, total }),
-  });
+  try {
+    const res = await fetch(`${API_BASE}/generate-bill?mode=preview`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customerName, items, total }),
+    });
 
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
+    if (!res.ok) {
+      return alert("Failed to generate PDF");
+    }
 
-  window.open(url); // Preview only
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+
+    window.open(url); // Preview only
+  } catch (err) {
+    console.error(err);
+    alert("Error connecting to server");
+  }
 }
 
 // =============================
@@ -81,12 +93,17 @@ async function sendEmail() {
 
   const total = items.reduce((sum, i) => sum + i.qty * i.price, 0);
 
-  const res = await fetch("http://localhost:5000/generate-bill?mode=email", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ customerName, customerEmail, items, total }),
-  });
+  try {
+    const res = await fetch(`${API_BASE}/generate-bill?mode=email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customerName, customerEmail, items, total }),
+    });
 
-  if (res.ok) alert("Email sent successfully!");
-  else alert("Failed to send email");
+    if (res.ok) alert("Email sent successfully!");
+    else alert("Failed to send email");
+  } catch (err) {
+    console.error(err);
+    alert("Error connecting to server");
+  }
 }
