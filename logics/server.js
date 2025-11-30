@@ -75,17 +75,15 @@ app.post("/generate-bill", async (req, res) => {
   html = html.replace(/{{rows}}/g, rows);
 
   try {
-    console.log("PUPPETEER_CACHE_DIR at runtime:", process.env.PUPPETEER_CACHE_DIR);
-
-    // Generate PDF
+    // Generate PDF using system Chromium
     const browser = await puppeteer.launch({
       headless: "new",
+      executablePath: "/usr/bin/chromium",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
-        "--disable-web-security",
       ],
     });
 
