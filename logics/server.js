@@ -75,6 +75,8 @@ app.post("/generate-bill", async (req, res) => {
   html = html.replace(/{{rows}}/g, rows);
 
   try {
+    console.log("PUPPETEER_CACHE_DIR at runtime:", process.env.PUPPETEER_CACHE_DIR);
+
     // Generate PDF
     const browser = await puppeteer.launch({
       headless: "new",
