@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -o errexit
 
-# Install Node dependencies
+# Where Puppeteer should cache Chrome
+export PUPPETEER_CACHE_DIR=/opt/render/.cache/puppeteer
+mkdir -p "$PUPPETEER_CACHE_DIR"
+
+# Install dependencies
 npm install
 
-# Create cache folder for Puppeteer
-export PUPPETEER_CACHE_DIR=/opt/render/.cache/puppeteer
-mkdir -p $PUPPETEER_CACHE_DIR
-
-# Install the Chromium browser Puppeteer needs
+# Download Chrome that Puppeteer expects
 npx puppeteer browsers install chrome
