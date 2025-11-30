@@ -53,7 +53,6 @@ function updateTable() {
 // =============================
 // 1️⃣ Generate PDF (Preview Only)
 // =============================
-
 async function generatePDF() {
   const customerName = document.getElementById("customerName").value;
   if (!customerName) return alert("Enter customer name");
@@ -100,8 +99,13 @@ async function sendEmail() {
       body: JSON.stringify({ customerName, customerEmail, items, total }),
     });
 
-    if (res.ok) alert("Email sent successfully!");
-    else alert("Failed to send email");
+    if (res.ok) {
+      const data = await res.json().catch(() => null);
+      alert(data?.message || "Email sent successfully!");
+    } else {
+      const data = await res.json().catch(() => null);
+      alert(data?.error || "Failed to send email");
+    }
   } catch (err) {
     console.error(err);
     alert("Error connecting to server");
