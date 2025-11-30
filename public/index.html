@@ -2,71 +2,66 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Bill Generator</title>
+  <title>Bill Generator</title>
 
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
+  <div class="container">
+    <div class="card">
+      <h1>🧾 Bill Generator</h1>
 
-    <div class="container">
+      <!-- Customer Name -->
+      <label class="label">Customer Name</label>
+      <input id="customerName" class="input" placeholder="Enter customer name" />
 
-        <div class="card">
+      <!-- Item Input Section -->
+      <h3 class="section-title">Add Item</h3>
 
-            <h1>🧾 Bill Generator</h1>
+      <div class="row">
+        <input id="itemName" class="input small" placeholder="Item Name" />
+        <input id="qty" class="input small" type="number" placeholder="Qty" />
+        <input id="price" class="input small" type="number" placeholder="Price" />
+        <button class="btn secondary" onclick="addItem()">Add</button>
+      </div>
 
-            <!-- Customer Name -->
-            <label class="label">Customer Name</label>
-            <input id="customerName" class="input" placeholder="Enter customer name" />
+      <!-- Items Table -->
+      <h3 class="section-title">Items</h3>
 
-            <!-- Item Input Section -->
-            <h3 class="section-title">Add Item</h3>
+      <div class="table-wrapper">
+        <table id="itemTable">
+          <tr>
+            <th>Name</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>
+        </table>
+      </div>
 
-            <div class="row">
-                <input id="itemName" class="input small" placeholder="Item Name">
-                <input id="qty" class="input small" type="number" placeholder="Qty">
-                <input id="price" class="input small" type="number" placeholder="Price">
-                <button class="btn secondary" onclick="addItem()">Add</button>
-            </div>
+      <!-- Total -->
+      <h2 id="grandTotal" class="total">Total: ₹0</h2>
 
-            <!-- Items Table -->
-            <h3 class="section-title">Items</h3>
+      <!-- Email -->
+      <label class="label">Customer Email</label>
+      <input id="customerEmail" class="input" placeholder="Enter customer email" />
 
-            <div class="table-wrapper">
-                <table id="itemTable">
-                    <tr>
-                        <th>Name</th>
-                        <th>Qty</th>
-                        <th>Price</th>
-                        <th>Total</th>
-                    </tr>
-                </table>
-            </div>
-
-            <!-- Total -->
-            <h2 id="grandTotal" class="total">Total: ₹0</h2>
-
-            <!-- Email -->
-            <label class="label">Customer Email</label>
-            <input id="customerEmail" class="input" placeholder="Enter customer email" />
-
-            <!-- Buttons -->
-            <div class="btn-group">
-                <button class="btn primary" onclick="generatePDF()">Generate PDF</button>
-                <button class="btn success" onclick="sendEmail()">Send Email</button>
-            </div>
-
-        </div>
-
+      <!-- Buttons -->
+      <div class="btn-group">
+        <button class="btn primary" onclick="generatePDF()">Generate PDF</button>
+        <button class="btn success" onclick="sendEmail()">Send Email</button>
+      </div>
     </div>
+  </div>
 
-    <script src="./script.js"></script>
+  <script src="./script.js"></script>
 </body>
 
 </html>
